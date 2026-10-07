@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "P001_hola_mundo"
+        "P100_mapreduce_word_count"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true
