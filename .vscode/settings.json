@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "P100_mapreduce_word_count"
+        "P101_manejo_editor"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true
