@@ -43,4 +43,62 @@ def clean_campaign_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         ...
     """
 
-    raise NotImplementedError
+    import glob
+    from pathlib import Path
+
+    lab_dir = Path(__file__).resolve().parents[1]
+    files = sorted(glob.glob(str(lab_dir / "data" / "bank-marketing-campaing-*.csv.gz")))
+    df = pd.concat(
+        [pd.read_csv(path, compression="gzip") for path in files],
+        ignore_index=True,
+    )
+    df["client_id"] = range(len(df))
+
+    client = df[
+        ["client_id", "age", "job", "marital", "education", "credit_default", "mortgage"]
+    ].copy()
+    client["job"] = client["job"].str.replace(".", "", regex=False).str.replace("-", "_", regex=False)
+    client["education"] = client["education"].replace("unknown", pd.NA)
+    client["education"] = client["education"].str.replace(".", "_", regex=False)
+    client["credit_default"] = (client["credit_default"].str.lower() == "yes").astype(int)
+    client["mortgage"] = (client["mortgage"].str.lower() == "yes").astype(int)
+
+    month_map = {
+        "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+        "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+    }
+    campaign = df[
+        [
+            "client_id", "number_contacts", "contact_duration",
+            "previous_campaign_contacts", "previous_outcome",
+            "campaign_outcome", "month", "day",
+        ]
+    ].copy()
+    campaign["previous_outcome"] = (campaign["previous_outcome"].str.lower() == "success").astype(int)
+    campaign["campaign_outcome"] = (campaign["campaign_outcome"].str.lower() == "yes").astype(int)
+    campaign["last_contact_date"] = (
+        campaign["month"].str.lower().map(month_map).map(lambda month: f"{month:02d}")
+    )
+    campaign["last_contact_date"] = (
+        "2022-" + campaign["last_contact_date"] + "-"
+        + campaign["day"].astype(str).str.zfill(2)
+    )
+    campaign = campaign.drop(columns=["month", "day"])
+    campaign = campaign[
+        [
+            "client_id", "number_contacts", "contact_duration",
+            "previous_campaign_contacts", "previous_outcome",
+            "campaign_outcome", "last_contact_date",
+        ]
+    ]
+
+    economics = df[
+        ["client_id", "cons_price_idx", "euribor_three_months"]
+    ].copy()
+
+    submission = lab_dir / "submission"
+    submission.mkdir(parents=True, exist_ok=True)
+    client.to_csv(submission / "client.csv", index=False)
+    campaign.to_csv(submission / "campaign.csv", index=False)
+    economics.to_csv(submission / "economics.csv", index=False)
+    return client, campaign, economics
