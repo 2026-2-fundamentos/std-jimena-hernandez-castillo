@@ -9,4 +9,9 @@ def pregunta_04():
         [("01", 3), ("02", 4), ("03", 2), ...]
     """
 
-    raise NotImplementedError
+    from collections import Counter
+
+    from ._common import read_rows
+
+    counts = Counter(row[2][5:7] for row in read_rows())
+    return sorted(counts.items())

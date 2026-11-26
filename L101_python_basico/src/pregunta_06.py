@@ -13,4 +13,14 @@ def pregunta_06():
         [("aaa", 1, 9), ("bbb", 1, 9), ...]
     """
 
-    raise NotImplementedError
+    from ._common import read_rows, split_metrics
+
+    bounds = {}
+    for row in read_rows():
+        for key, value in split_metrics(row[4]):
+            if key not in bounds:
+                bounds[key] = [value, value]
+            else:
+                bounds[key][0] = min(bounds[key][0], value)
+                bounds[key][1] = max(bounds[key][1], value)
+    return [(key, minimum, maximum) for key, (minimum, maximum) in sorted(bounds.items())]

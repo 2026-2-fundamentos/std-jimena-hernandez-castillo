@@ -11,4 +11,9 @@ def pregunta_07():
         [(0, ["C"]), (1, ["E", "B", "E"]), (2, ["A", "E"]), ...]
     """
 
-    raise NotImplementedError
+    from ._common import read_rows
+
+    letters_by_value = {}
+    for letter, value, *_ in read_rows():
+        letters_by_value.setdefault(int(value), []).append(letter)
+    return [(value, letters_by_value[value]) for value in sorted(letters_by_value)]

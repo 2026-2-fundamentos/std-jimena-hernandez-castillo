@@ -11,4 +11,9 @@ def pregunta_10():
         [("E", 3, 5), ("A", 3, 4), ("B", 4, 4), ...]
     """
 
-    raise NotImplementedError
+    from ._common import read_rows, split_codes, split_metrics
+
+    return [
+        (row[0], len(split_codes(row[3])), len(split_metrics(row[4])))
+        for row in read_rows()
+    ]

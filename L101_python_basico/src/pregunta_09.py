@@ -9,4 +9,9 @@ def pregunta_09():
         {"aaa": 13, "bbb": 16, "ccc": 23, ...}
     """
 
-    raise NotImplementedError
+    from collections import Counter
+
+    from ._common import read_rows, split_metrics
+
+    counts = Counter(key for row in read_rows() for key, _ in split_metrics(row[4]))
+    return dict(sorted(counts.items()))

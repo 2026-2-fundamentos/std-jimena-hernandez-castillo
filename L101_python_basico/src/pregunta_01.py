@@ -8,4 +8,6 @@ def pregunta_01():
         214
     """
 
-    raise NotImplementedError
+    from ._common import read_rows
+
+    return sum(int(row[1]) for row in read_rows())
