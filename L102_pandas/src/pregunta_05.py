@@ -13,4 +13,9 @@ def pregunta_05():
         ...
     """
 
-    raise NotImplementedError
+    import pandas as pd
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "data" / "tbl0.tsv"
+    df = pd.read_csv(path, sep="\t")
+    return df.groupby("c1")["c2"].max().sort_index()

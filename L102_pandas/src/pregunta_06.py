@@ -9,4 +9,9 @@ def pregunta_06():
         ["A", "B", "C", "D", "E", "F", "G"]
     """
 
-    raise NotImplementedError
+    import pandas as pd
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "data" / "tbl1.tsv"
+    df = pd.read_csv(path, sep="\t")
+    return sorted(df["c4"].dropna().str.upper().unique())

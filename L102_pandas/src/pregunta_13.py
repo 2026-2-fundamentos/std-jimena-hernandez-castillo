@@ -15,4 +15,11 @@ def pregunta_13():
         ...
     """
 
-    raise NotImplementedError
+    import pandas as pd
+    from pathlib import Path
+
+    data_dir = Path(__file__).resolve().parents[1] / "data"
+    tbl0 = pd.read_csv(data_dir / "tbl0.tsv", sep="\t")
+    tbl2 = pd.read_csv(data_dir / "tbl2.tsv", sep="\t")
+    combined = tbl0.merge(tbl2, on="c0", how="inner")
+    return combined.groupby("c1")["c5b"].sum().sort_index()

@@ -13,4 +13,9 @@ def pregunta_07():
         ...
     """
 
-    raise NotImplementedError
+    import pandas as pd
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "data" / "tbl0.tsv"
+    df = pd.read_csv(path, sep="\t")
+    return df.groupby("c1")["c2"].sum().sort_index()
