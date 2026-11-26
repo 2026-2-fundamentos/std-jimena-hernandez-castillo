@@ -26,4 +26,31 @@ def pregunta_01():
         ...
     """
 
-    raise NotImplementedError
+    import re
+    from pathlib import Path
+
+    import pandas as pd
+
+    path = Path(__file__).resolve().parents[1] / "data" / "clusters_report.txt"
+    text = path.read_text(encoding="utf-8")
+    pattern = re.compile(
+        r"^\s*(\d+)\s+(\d+)\s+([\d,]+)\s*%\s*(.*(?:\n(?!\s*\d+\s+\d+\s+[\d,]+\s*%).*)*)",
+        re.MULTILINE,
+    )
+    rows = []
+    for match in pattern.finditer(text):
+        cluster, count, percentage, remainder = match.groups()
+        keywords = " ".join(remainder.split())
+        keywords = re.sub(r"\s+\.\s*$", ".", keywords)
+        if keywords.endswith("."):
+            keywords = keywords[:-1]
+        keywords = re.sub(r"\s+", " ", keywords)
+        rows.append(
+            {
+                "cluster": int(cluster),
+                "cantidad_de_palabras_clave": int(count),
+                "porcentaje_de_palabras_clave": float(percentage.replace(",", ".")),
+                "principales_palabras_clave": keywords,
+            }
+        )
+    return pd.DataFrame(rows)
