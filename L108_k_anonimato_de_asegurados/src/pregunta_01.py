@@ -80,4 +80,95 @@ def pregunta_01():
         }
     """
 
-    raise NotImplementedError
+    import json
+    from pathlib import Path
+
+    import pandas as pd
+
+    lab_dir = Path(__file__).resolve().parents[1]
+    df = pd.read_csv(lab_dir / "data" / "insurance.csv.gz", compression="gzip")
+
+    def age_group(age):
+        if age < 30:
+            return "18-29"
+        if age < 40:
+            return "30-39"
+        if age < 50:
+            return "40-49"
+        return "50-64"
+
+    def bmi_group(bmi):
+        if bmi < 18.5:
+            return "bajo peso"
+        if bmi < 25:
+            return "normal"
+        if bmi < 30:
+            return "sobrepeso"
+        return "obesidad"
+
+    def children_group(children):
+        if children == 0:
+            return "0"
+        if children <= 2:
+            return "1-2"
+        return "3+"
+
+    df["age_group"] = df["age"].map(age_group)
+    df["bmi_group"] = df["bmi"].map(bmi_group)
+    df["children_group"] = df["children"].map(children_group)
+
+    original_quasi = ["age", "sex", "bmi", "children", "region"]
+    original_sizes = df.groupby(original_quasi, dropna=False).size()
+    original_k = int(original_sizes.min())
+    original_unique = int((original_sizes == 1).sum())
+
+    schemes = {}
+    published_frames = {}
+    for name, quasi in (
+        ("with_children", ["age_group", "sex", "bmi_group", "children_group", "region"]),
+        ("without_children", ["age_group", "sex", "bmi_group", "region"]),
+    ):
+        generalized = df.copy()
+        sizes = generalized.groupby(quasi, dropna=False).size()
+        published_mask = generalized.set_index(quasi).index.map(sizes)
+        published = generalized[published_mask >= 5].copy()
+        published_classes = published.groupby(quasi, dropna=False).size()
+        diversity = published.groupby(quasi)["smoker"].nunique()
+        nondiverse_classes = int((diversity == 1).sum())
+        nondiverse_records = int(
+            published.set_index(quasi).index.isin(diversity[diversity == 1].index).sum()
+        )
+        schemes[name] = {
+            "quasi_identifiers": quasi,
+            "equivalence_classes": int(sizes.shape[0]),
+            "k_before_suppression": int(sizes.min()),
+            "suppressed_records": int(len(df) - len(published)),
+            "published_records": int(len(published)),
+            "published_classes": int(published_classes.shape[0]),
+            "classes_without_smoker_diversity": nondiverse_classes,
+            "records_without_smoker_diversity": nondiverse_records,
+        }
+        published_frames[name] = published
+
+    selected = min(schemes, key=lambda name: schemes[name]["suppressed_records"])
+    published = published_frames[selected]
+    published_columns = schemes[selected]["quasi_identifiers"] + ["smoker", "charges"]
+    published_output = published[published_columns]
+
+    report = {
+        "original_k": original_k,
+        "original_unique_records": original_unique,
+        "schemes": schemes,
+        "selected_scheme": selected,
+        "mean_charges_original": float(df["charges"].mean()),
+        "mean_charges_published": float(published["charges"].mean()),
+        "smoker_rate_original": float((df["smoker"] == "yes").mean()),
+        "smoker_rate_published": float((published["smoker"] == "yes").mean()),
+    }
+    submission = lab_dir / "submission"
+    submission.mkdir(parents=True, exist_ok=True)
+    (submission / "privacy_report.json").write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    published_output.to_csv(submission / "insurance_published.csv", index=False)
+    return report
